@@ -78,13 +78,13 @@ Project directories (e.g., `saas-app/`, `internal-tool/`) are created by you whe
 SSH into a fresh Ubuntu 24.04 VPS as root and run the bootstrap script:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_ORG/solo-stack/main/scripts/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/reneweiser/solo-stack/main/scripts/bootstrap.sh | bash
 ```
 
 Or clone first and run locally:
 
 ```bash
-git clone https://github.com/YOUR_ORG/solo-stack.git /opt/solo-stack
+git clone https://github.com/reneweiser/solo-stack.git /opt/solo-stack
 cd /opt/solo-stack
 sudo bash scripts/bootstrap.sh
 ```
