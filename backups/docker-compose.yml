@@ -1,0 +1,22 @@
+services:
+  backup:
+    image: offen/docker-volume-backup:v2
+    container_name: backup
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Mount any named volumes you want to back up under /backup/<name>.
+      # Example: back up the saas-app mysql data volume:
+      # - saas-app_mysql_data:/backup/saas-mysql:ro
+      # - saas-app_redis_data:/backup/saas-redis:ro
+
+# To opt services into backup behavior, add labels to their containers
+# in their own docker-compose.yml files:
+#
+#   labels:
+#     # Run mysqldump before the backup archive is created
+#     - docker-volume-backup.archive-pre=/bin/sh -c 'mysqldump -u root -p"$$MYSQL_ROOT_PASSWORD" --all-databases > /backup/dump.sql'
+#
+#     # Stop the container during backup for data consistency
+#     - docker-volume-backup.stop-during-backup=true

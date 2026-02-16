@@ -1,0 +1,27 @@
+# Global options
+{
+    email you@example.com  # used for Let's Encrypt account
+}
+
+# --- Example: SaaS Application ---
+# saas.example.com {
+#     reverse_proxy saas-app-app-1:8000
+# }
+
+# --- Example: Internal Tool ---
+# internal.example.com {
+#     reverse_proxy internal-tool-app-1:3000
+#
+#     # Optional: restrict to Tailscale / VPN IPs
+#     # @blocked not remote_ip 100.64.0.0/10
+#     # respond @blocked 403
+# }
+
+# --- Example: Marketing Site ---
+# example.com {
+#     reverse_proxy marketing-site-web-1:80
+# }
+#
+# www.example.com {
+#     redir https://example.com{uri} permanent
+# }
