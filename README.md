@@ -65,8 +65,9 @@ solo-stack/
 │   └── deploy.sh                # Generic deploy helper
 └── .github/
     └── workflows/
-        ├── deploy-caddy.yml     # Reload Caddy on config push
-        └── deploy-template.yml  # Copy per project
+        ├── deploy-caddy.yml               # Reload Caddy on config push
+        ├── deploy-template.yml            # For custom apps you build
+        └── deploy-thirdparty-template.yml # For cloned third-party repos
 ```
 
 Project directories (e.g., `saas-app/`, `internal-tool/`) are created by you when you add services. See [Adding a New Project](#adding-a-new-project) below.
@@ -119,13 +120,81 @@ cp .env.example .env
 docker compose up -d
 ```
 
-## Adding a New Project
+## Adding a Custom Project
+
+For apps you build and push to a container registry (GHCR, Docker Hub, etc.):
 
 1. Create a directory: `mkdir /opt/solo-stack/my-project`
 2. Add a `docker-compose.yml` — web-facing services join the `proxy` network, backing services stay on a private `backend` network
 3. Add the route to `caddy/Caddyfile`
 4. Copy `.github/workflows/deploy-template.yml` to `.github/workflows/deploy-my-project.yml` and replace `PROJECT_NAME` with your directory name
 5. Commit, push, done
+
+## Adding a Third-Party Project
+
+Many open-source projects ship their own `docker-compose.yml` in a repo you clone (e.g., [Zammad](https://github.com/zammad/zammad-docker-compose), [Plausible](https://github.com/plausible/community-edition), [Gitea](https://github.com/go-gitea/gitea)). You don't build anything — you just configure and run.
+
+The key trick: use `docker-compose.override.yml` to connect them to your Caddy proxy network without editing their compose file. Docker Compose automatically merges both files, so `git pull` to get upstream updates stays clean.
+
+### Step by step
+
+1. **Clone the project** into your solo-stack directory on the VPS:
+
+    ```bash
+    cd /opt/solo-stack
+    git clone https://github.com/zammad/zammad-docker-compose.git zammad
+    ```
+
+2. **Create a `docker-compose.override.yml`** to connect the web-facing service to the proxy network and remove the exposed host port (Caddy handles that):
+
+    ```yaml
+    # /opt/solo-stack/zammad/docker-compose.override.yml
+    services:
+      zammad-nginx:
+        ports: !reset []
+        networks:
+          - default
+          - proxy
+
+    networks:
+      proxy:
+        external: true
+    ```
+
+    > Find the web-facing service by looking for the one with `ports:` in their compose file. That's the service Caddy should route to.
+
+3. **Configure the project** — copy their `.env.example` to `.env` and fill in values as their docs describe.
+
+4. **Add the route to `caddy/Caddyfile`:**
+
+    ```caddyfile
+    support.example.com {
+        reverse_proxy zammad-zammad-nginx-1:8080
+    }
+    ```
+
+    > The container name follows the pattern `{directory}-{service}-{n}`. The internal port is whatever the service listens on (check their compose file — Zammad's nginx uses `8080`).
+
+5. **Start it:**
+
+    ```bash
+    cd /opt/solo-stack/zammad
+    docker compose up -d
+    ```
+
+6. **For CI/CD**, copy `.github/workflows/deploy-thirdparty-template.yml` and replace `PROJECT_NAME` with your directory name. This gives you a manual trigger button in GitHub Actions and an optional weekly auto-update schedule.
+
+### Updating a third-party project
+
+```bash
+cd /opt/solo-stack/zammad
+git pull                    # get upstream compose changes
+docker compose pull         # pull new images
+docker compose up -d        # recreate with new images
+docker image prune -f       # clean up old images
+```
+
+Your `docker-compose.override.yml` is untracked by the upstream repo, so it survives `git pull` without conflicts.
 
 ## Example Compose Files
 
@@ -328,7 +397,10 @@ Then mount the relevant volumes in `backups/docker-compose.yml`.
 
 ## CI/CD
 
-Each project gets its own GitHub Actions workflow that triggers on pushes to its directory. Copy `.github/workflows/deploy-template.yml` and customize for each project.
+Each project gets its own GitHub Actions workflow. Two templates are provided:
+
+- **`deploy-template.yml`** — for custom apps you build and push to GHCR. Triggers on pushes to the project directory.
+- **`deploy-thirdparty-template.yml`** — for third-party projects you clone. Triggers manually or on a weekly schedule to pull upstream updates.
 
 **Required GitHub secrets:**
 

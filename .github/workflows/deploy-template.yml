@@ -1,4 +1,7 @@
-# Template workflow — copy this file for each new project.
+# Template workflow for CUSTOM APPS you build and push to a container registry.
+# For third-party projects you clone (e.g., Zammad), use deploy-thirdparty-template.yml instead.
+#
+# Copy this file for each new project.
 # Replace all occurrences of PROJECT_NAME with your project directory name.
 # Replace YOUR_ORG/PROJECT_NAME with your GHCR image path.
 
