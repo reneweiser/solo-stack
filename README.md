@@ -52,7 +52,6 @@ Solo-Stack gives you a single Git repository that defines your entire server. Ev
 ```
 solo-stack/
 ├── README.md
-├── PLAN.md
 ├── .gitignore
 ├── caddy/
 │   ├── docker-compose.yml       # Caddy reverse proxy
